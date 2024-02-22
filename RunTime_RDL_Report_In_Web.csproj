@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<AspNetCoreHostingModelV2>InProcess</AspNetCoreHostingModelV2>
+		<EnableDefaultCompileItems>False</EnableDefaultCompileItems>
+		<RootNamespace>RunTime_RDL_Report_in_Web</RootNamespace>
+		<AssemblyName>RunTime_RDL_Report_in_Web</AssemblyName>
+	</PropertyGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="wwwroot\favicon.ico" />
+		<EmbeddedResource Include="wwwroot\index.css" />
+		<EmbeddedResource Include="wwwroot\index.html" />
+		<EmbeddedResource Include="wwwroot\jsViewer.min.css" />
+		<EmbeddedResource Include="wwwroot\jsViewer.min.js" />
+		<EmbeddedResource Include="wwwroot\custom-locale.json" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="ClientApp\package.json" />
+		<None Include="Properties\launchSettings.json" />
+		<None Include="Properties\licenses.licx" />
+	</ItemGroup>
+	<ItemGroup>
+		<Compile Include="Controllers\HomeController.cs" />
+		<Compile Include="Program.cs" />
+		<Compile Include="Reports\ReportDefinition.cs" />
+		<Compile Include="Startup.cs" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="GrapeCity.ActiveReports.Aspnetcore.Viewer" Version="17.2.2" />
+		<PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+	</ItemGroup>
+	<Target Name="BeforeClientBuild" BeforeTargets="BeforeBuild">
+		<ReadLinesFromFile File="wwwroot\custom-locale.json">
+			<Output TaskParameter="Lines" ItemName="CustomLocale" />
+		</ReadLinesFromFile>
+		<PropertyGroup>
+			<IsEmtry Condition=" '@(CustomLocale)' == '' ">true</IsEmtry>
+			<IsEmtry Condition=" '@(CustomLocale)' != '' ">false</IsEmtry>
+		</PropertyGroup>
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Properties="IsEmtry=$(IsEmtry)" Targets="ClientBuild" />
+	</Target>
+	<Target Name="ClientBuild" Condition=" '$(IsEmtry)' == 'true'">
+		<Exec WorkingDirectory="ClientApp" Command="npm install" />
+		<Exec WorkingDirectory="ClientApp" Command="npm run build" />
+	</Target>
+</Project>

@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <link rel='shortcut icon' type='image/x-icon' href='favicon.ico' />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#000000">
+    <title>Creating RDL Report in Code</title>
+    <link href="jsViewer.min.css" rel="stylesheet">
+    <link href="index.css" rel="stylesheet">
+</head>
+
+<body onload="populateList()">
+    <div style="width: 100%; overflow-x: hidden">
+        <div style="float:left; width: 125pt" class="main-nav navbar">
+            <div id='list-heading'>Select Country</div>
+            <ul id="countriesList" class="nav navbar-nav"></ul>
+        </div>
+        <div style="float:right;width:calc(100% - 125pt)" id="viewerContainer">
+        </div>
+    </div>
+    <script type="text/javascript" src="jsViewer.min.js"></script>
+    <script type="text/javascript">
+        let viewer = null;
+        function loadViewer(country) {
+            if (viewer == null) {
+                viewer = GrapeCity.ActiveReports.JSViewer.create({
+                    element: '#viewerContainer',
+                    reportID: "MyReport",
+                    reportParameters: [{ name: 'selectedCountry', values: [country] }]
+                });
+            }
+            else { viewer.openReport("MyReport", [{ name: 'selectedCountry', values: [country] }]) }
+        }
+
+        function populateList() {
+            let countriesList = document.getElementById("countriesList");
+            let oReq = new XMLHttpRequest();
+            oReq.onload = function () {
+                var lookup = {};
+                var countriesObj = [];
+                fetch('https://demodata.grapecity.com/northwind/api/v1/Customers')
+                    .then(res => res.json())
+                    .then((out) => {
+                        for (var item, i = 0; item = out[i++];) {
+                            var country = item.country;
+                            if (!(country in lookup)) {
+                                lookup[country] = 1;
+                                countriesObj.push(country);
+                            }
+                        }
+                        countriesObj.sort();
+                        for (let i = 0; i < countriesObj.length; i++) {
+                            const countryName = countriesObj[i];
+                            const countries = document.createElement('li');
+                            countries.className = 'countriesList_item';
+                            const countryItem = document.createElement('span');
+                            countryItem.innerText = countryName;
+                            countries.appendChild(countryItem);
+                            countriesList.appendChild(countries);
+
+                            countries.addEventListener('click', function () {
+                                loadViewer(countryName);
+                            });
+                        }
+                    })
+                    .catch(err => { throw err });
+            }
+            oReq.open("get", "reports", false);
+            oReq.send();
+        }
+    </script>
+</body>
+</html>
